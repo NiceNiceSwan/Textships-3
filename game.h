@@ -3,18 +3,16 @@
 
 #include <SDL3/SDL.h>
 #include <vector>
-// #include <list>
 #include <random>
 
 #include "ship.h"
 #include "map_tile.h"
+#include "camera.h"
 
 extern std::mt19937_64 random_number_generator;
 
-extern const short int TERMINAL_HIGHEST_CELL_ID_X;
-extern const short int TERMINAL_HIGHEST_CELL_ID_Y;
-extern const short int LEFT_INFO_PANEL_VERTICAL_LINE_ID;
-extern const short int RIGHT_INFO_PANEL_VERTICAL_LINE_ID;
+extern const short int WINDOW_WIDTH;
+extern const short int WINDOW_HEIGHT;
 extern const short int MAP_SIZE_X;
 extern const short int MAP_SIZE_Y;
 extern const short int TEAM_1;
@@ -33,25 +31,38 @@ class Game
 private:
     std::vector<std::vector<Ship>> _ships;
     std::vector<std::vector<Map_tile>> _map;
-    // Terminal_manager _terminal_manager;
 
     bool _quit_game;
 
     Game_state _game_state;
+    Camera _camera;
+
 
     bool _selected_a_ship;
     Ship* _selected_ship;
 
     int _player;
+
+    // functions
+    void wait_screen(SDL_Renderer* renderer);
+    void draw_map(SDL_Renderer* renderer);
+
 public:
     Game();
 
     Game_state event_handler(SDL_Event event);
-    Game_state waiting_event(SDL_Event event);
+    void waiting_event(SDL_Event event);
+    void mouse_input(SDL_Event event);
 
+    // getters
+    Game_state game_state() { return _game_state; }
+
+    // setters
+
+    // functions
+    void draw(SDL_Renderer* renderer);
     bool end_game();
     void play();
-    void wait_screen();
     void turn();
     void mouse_input();
     void select_ship(Position map_position, Position mouse_position);

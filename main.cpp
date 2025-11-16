@@ -1,21 +1,40 @@
 #define SDL_MAIN_USE_CALLBACKS
 #include <SDL3/SDL_main.h>
 #include <SDL3/SDL.h>
+#include <SDL3/SDL_surface.h>
 #include <SDL3/SDL_mouse.h>
-#include <iostream>
+#include <time.h>
+#include <random>
 
 #include "camera.h"
+#include "game.h"
+#include "ship.h"
 
-#define WINDOW_WIDTH 960
-#define WINDOW_HEIGHT 560
+std::mt19937_64 random_number_generator((unsigned long long int)time(NULL));
+
+const short int WINDOW_WIDTH = 1600;
+const short int WINDOW_HEIGHT = 900;
+
+/// @brief grid size of our map
+const short int MAP_SIZE_X = 50;
+/// @brief grid size of our map
+const short int MAP_SIZE_Y = 50;
+/// @brief the size of a single grid
+const short int PIXEL_SIZE = 32;
+
+const short int TEAM_1 = 0;
+const short int TEAM_2 = 1;
+const short int SHIPS_IN_TEAM = 5;
 
 SDL_Window* window;
 SDL_Renderer* renderer;
-static SDL_Texture *texture = NULL;
 static int texture_width = 0;
 static int texture_height = 0;
+static float scale = 1;
 Position position(0, 0);
-Camera camera(position, WINDOW_WIDTH, WINDOW_HEIGHT);
+SDL_FRect selection_rect;
+
+Game game;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
@@ -26,126 +45,54 @@ SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("funny dog", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("Textships", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
     SDL_SetRenderLogicalPresentation(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
-    SDL_SetRenderDrawColor(renderer, 0, 64, 128, SDL_ALPHA_OPAQUE);  /* dark cyan, full alpha */
-    SDL_RenderClear(renderer);  /* start with a blank canvas. */
-    SDL_RenderPresent(renderer);
+    // SDL_SetRenderDrawColor(renderer, 0, 64, 128, SDL_ALPHA_OPAQUE);
+    // SDL_RenderClear(renderer);  /* start with a blank canvas. */
+    // SDL_RenderPresent(renderer);
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    SDL_Surface *surface = NULL;
-    char* BMP_path = nullptr;
+    Ship::initialize_texture_cache(renderer);
 
-    SDL_asprintf(&BMP_path, "%sfunny_dog.BMP", SDL_GetBasePath());  /* allocate a string of the full file path */
-    surface = SDL_LoadBMP(BMP_path);
-    if (!surface) {
-        SDL_Log("Couldn't load bitmap: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    SDL_free(BMP_path);
-
-    texture_width = surface->w;
-    texture_height = surface->h;
-
-    texture = SDL_CreateTextureFromSurface(renderer, surface);
-    if (!texture) {
-        SDL_Log("Couldn't create static texture: %s", SDL_GetError());
-        return SDL_APP_FAILURE;
-    }
-
-    SDL_DestroySurface(surface);  /* done with this, the texture has a copy of the pixels now. */
+    game.draw(renderer);
 
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppIterate(void *appstate)
 {
-    SDL_SetRenderDrawColor(renderer, 0, 64, 128, SDL_ALPHA_OPAQUE);
-    SDL_RenderClear(renderer);
-
-    SDL_FRect rect = { 0, 0, (float) texture_width, (float) texture_height };;
-    // SDL_Rect viewport;
-
-    // rect.x = (WINDOW_WIDTH - texture_width) / 2;
-    // rect.y = (WINDOW_HEIGHT - texture_height) / 2;
-    // rect.h = texture_height;
-    // rect.w = texture_width;
-
-    SDL_Rect viewport;
-    viewport.x = camera.position().x;
-    viewport.y = camera.position().y;
-    viewport.w = camera.view_width();
-    viewport.h = camera.view_height();
-    SDL_SetRenderViewport(renderer, &viewport);
-    SDL_RenderTexture(renderer, texture, NULL, &rect);
-    // viewport.x = 0;
-    // viewport.y = 0;
-    // viewport.w = WINDOW_WIDTH / 2;
-    // viewport.h = WINDOW_HEIGHT / 2;
-    // SDL_SetRenderViewport(renderer, NULL);  /* NULL means "use the whole window" */
-    // SDL_RenderTexture(renderer, texture, NULL, &rect);
-
-
-    // viewport.x = WINDOW_WIDTH / 2;
-    // viewport.y = WINDOW_HEIGHT / 4;
-    // viewport.w = texture_width / 2;
-    // viewport.h = texture_height / 2;
-    // SDL_SetRenderViewport(renderer, &viewport);  /* NULL means "use the whole window" */
-    // SDL_RenderTexture(renderer, texture, NULL, &rect);
-
-    // viewport.x = (texture_width + WINDOW_WIDTH) / 2;
-    // viewport.y = WINDOW_HEIGHT / 4;
-    // viewport.w = texture_width / 2;
-    // viewport.h = texture_height / 2;
-    // SDL_SetRenderViewport(renderer, &viewport);  /* NULL means "use the whole window" */
-    // SDL_RenderTexture(renderer, texture, NULL, &rect);
-
-    SDL_RenderPresent(renderer);
     return SDL_APP_CONTINUE;
 }
 
 SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
 {
-    static int mouse_press = 0;
-    // close the window on request
     if (event->type == SDL_EVENT_WINDOW_CLOSE_REQUESTED)
     {
         return SDL_APP_SUCCESS;
     }
-    if (event->type == SDL_EVENT_MOUSE_MOTION)
+    switch (game.game_state())
     {
-        float x;
-        float y;
-        SDL_GetMouseState(&x, &y);
-        // SDL_GetGlobalMouseState(&x, &y);
-        std::cout << "mouse position x: " << x << ", position y: " << y << std::endl;
-    }
-    if (event->type == SDL_EVENT_KEY_DOWN)
-    {
-        if (event->key.key == SDLK_A)
+    case Game_state::WAITING:
+        if (event->type == SDL_EVENT_KEY_DOWN)
         {
-            position = camera.position();
-            position.x -= 100;
-            camera.position(position);
+            game.waiting_event(*event);
         }
-        if (event->key.key == SDLK_D)
-        {
-            position = camera.position();
-            position.x += 100;
-            camera.position(position);
-        }
+        break;
+    
+    default:
+        break;
     }
-
+    game.draw(renderer);
     return SDL_APP_CONTINUE;
 }
 
 void SDL_AppQuit(void *appstate, SDL_AppResult result)
 {
-    SDL_DestroyTexture(texture);
+    // SDL_DestroyTexture(texture);
     // destroy the window
     SDL_DestroyWindow(window);
 }
