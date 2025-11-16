@@ -2,6 +2,10 @@
 #define CAMERA_H
 
 #include "position.h"
+#include <SDL3/SDL.h>
+
+extern const short int WINDOW_WIDTH;
+extern const short int WINDOW_HEIGHT;
 
 class Camera
 {
@@ -25,6 +29,11 @@ public:
     void position(Position position) { _position = position; }
     void view_width(int width) { _view_width = width; }
     void view_height(int height) { _view_height = height; }
+
+    // functions
+    void reset_position();
+    SDL_FRect offset_position(SDL_FRect texture);
+    Position offset_position(Position position);
 };
 
 #endif
