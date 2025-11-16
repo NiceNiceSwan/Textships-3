@@ -9,6 +9,7 @@
 #include "camera.h"
 #include "game.h"
 #include "ship.h"
+#include "icon_renderer.h"
 
 std::mt19937_64 random_number_generator((unsigned long long int)time(NULL));
 
@@ -38,26 +39,26 @@ Game game;
 
 SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
 {
-    // create a window
-    // window = SDL_CreateWindow("Hello, Triangle!", 960, 540, SDL_WINDOW_RESIZABLE);
     if (!SDL_Init(SDL_INIT_VIDEO)) {
         SDL_Log("Couldn't initialize SDL: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
 
-    if (!SDL_CreateWindowAndRenderer("Textships", WINDOW_WIDTH, WINDOW_HEIGHT, SDL_WINDOW_RESIZABLE, &window, &renderer)) {
+    if (!SDL_CreateWindowAndRenderer("Textships", WINDOW_WIDTH, WINDOW_HEIGHT, 0, &window, &renderer)) {
         SDL_Log("Couldn't create window/renderer: %s", SDL_GetError());
         return SDL_APP_FAILURE;
     }
     SDL_SetRenderLogicalPresentation(renderer, WINDOW_WIDTH, WINDOW_HEIGHT, SDL_LOGICAL_PRESENTATION_LETTERBOX);
 
-    // SDL_SetRenderDrawColor(renderer, 0, 64, 128, SDL_ALPHA_OPAQUE);
-    // SDL_RenderClear(renderer);  /* start with a blank canvas. */
-    // SDL_RenderPresent(renderer);
     SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
 
-    Ship::initialize_texture_cache(renderer);
+    if (!render_icon(window))
+    {
+        return SDL_APP_FAILURE;
+    }
 
+    Ship::initialize_texture_cache(renderer);
+    game.initialize();
     game.draw(renderer);
 
     return SDL_APP_CONTINUE;
@@ -74,19 +75,23 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     {
         return SDL_APP_SUCCESS;
     }
+
     switch (game.game_state())
     {
     case Game_state::WAITING:
-        if (event->type == SDL_EVENT_KEY_DOWN)
-        {
-            game.waiting_event(*event);
-        }
+        game.waiting_event(*event);
         break;
-    
+        
+    case Game_state::TURN:
+        game.turn_event(*event);
+        break;
+
     default:
         break;
     }
+
     game.draw(renderer);
+
     return SDL_APP_CONTINUE;
 }
 

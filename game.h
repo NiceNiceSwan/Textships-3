@@ -15,6 +15,7 @@ extern const short int WINDOW_WIDTH;
 extern const short int WINDOW_HEIGHT;
 extern const short int MAP_SIZE_X;
 extern const short int MAP_SIZE_Y;
+extern const short int PIXEL_SIZE;
 extern const short int TEAM_1;
 extern const short int TEAM_2;
 extern const short int SHIPS_IN_TEAM;
@@ -46,12 +47,17 @@ private:
     // functions
     void wait_screen(SDL_Renderer* renderer);
     void draw_map(SDL_Renderer* renderer);
+    void draw_ships(SDL_Renderer* renderer);
+    void draw_border_lines(SDL_Renderer* renderer);
+    void draw_coordinate_lines(SDL_Renderer* renderer);
 
 public:
     Game();
+    void initialize();
 
     Game_state event_handler(SDL_Event event);
     void waiting_event(SDL_Event event);
+    void turn_event(SDL_Event event);
     void mouse_input(SDL_Event event);
 
     // getters

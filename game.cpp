@@ -11,14 +11,17 @@ Game::Game()
     _quit_game = false;
     _player = 0;
     _ships.resize(2);
-    // // _map.resize(MAP_SIZE_X, std::vector<Map_tile>(MAP_SIZE_Y));
+    _map.resize(MAP_SIZE_X, std::vector<Map_tile>(MAP_SIZE_Y));
+}
 
+void Game::initialize()
+{
     std::uniform_int_distribution<int> player_1_spawn_positions(0, 9);
+    std::uniform_int_distribution<int> player_2_spawn_positions(40, 49);
 
     // // debug positions to test detection and firing
-    std::uniform_int_distribution<int> player_2_spawn_positions(5, 14);
+    // std::uniform_int_distribution<int> player_2_spawn_positions(5, 14);
 
-    // // std::uniform_int_distribution<int> player_2_spawn_positions(40, 49);
 
     for (size_t i = 0; i < _ships.size(); i++)
     {
@@ -29,7 +32,7 @@ Game::Game()
         _ships[i].push_back(Ship::Battleship(i));
     }
     generate_spawning_positions(player_1_spawn_positions, SHIPS_IN_TEAM, TEAM_1);
-    generate_spawning_positions(player_1_spawn_positions, SHIPS_IN_TEAM, TEAM_2);
+    generate_spawning_positions(player_2_spawn_positions, SHIPS_IN_TEAM, TEAM_2);
     
 }
 
@@ -66,12 +69,80 @@ void Game::wait_screen(SDL_Renderer* renderer)
 
 void Game::draw_map(SDL_Renderer* renderer)
 {
-    SDL_SetRenderDrawColor(renderer, 0, 64, 128, SDL_ALPHA_OPAQUE);
+    SDL_SetRenderDrawColor(renderer, 0, 64, 128, 255);
     SDL_RenderClear(renderer);
 
-    
+    draw_border_lines(renderer);
+    draw_coordinate_lines(renderer);
+
+    draw_ships(renderer);
 
     SDL_RenderPresent(renderer);
+}
+
+void Game::draw_ships(SDL_Renderer* renderer)
+{
+    SDL_FRect texture_position = { 0, 0, (float)PIXEL_SIZE, (float)PIXEL_SIZE};
+
+    for (size_t team_id = 0; team_id < 2; team_id++)
+    {
+        for (size_t ship_id = 0; ship_id < _ships[team_id].size(); ship_id++)
+        {
+            Ship* ship = &_ships[team_id][ship_id];
+            if (ship->visible())
+            {
+                texture_position.x = ship->position().x * PIXEL_SIZE;
+                texture_position.y = ship->position().y * PIXEL_SIZE;
+
+                texture_position = _camera.offset_position(texture_position);
+                
+                SDL_RenderTexture(renderer, ship->texture(), NULL, &texture_position);
+            }
+            
+        }
+        
+    }
+}
+
+void Game::draw_border_lines(SDL_Renderer* renderer)
+{
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+    
+    float far_right_point = MAP_SIZE_X * PIXEL_SIZE;
+    float far_down_point = MAP_SIZE_Y * PIXEL_SIZE;
+
+    SDL_FRect border_rectangle;
+    border_rectangle.x = 0;
+    border_rectangle.y = 0;
+    border_rectangle.w = 1600;
+    border_rectangle.h = 1600;
+    border_rectangle = _camera.offset_position(border_rectangle);
+
+    SDL_RenderRect(renderer, &border_rectangle);
+}
+
+void Game::draw_coordinate_lines(SDL_Renderer* renderer)
+{
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+
+    Position start_cords(0, 0);
+    Position far_points(MAP_SIZE_X * PIXEL_SIZE, MAP_SIZE_Y * PIXEL_SIZE);
+
+    start_cords = _camera.offset_position(start_cords);
+    far_points = _camera.offset_position(far_points);
+
+    Position offset_cords;
+
+    for (size_t index = 1; index < 50; index++)
+    {
+        offset_cords.x = PIXEL_SIZE * index;
+        offset_cords.y = PIXEL_SIZE * index;
+        offset_cords = _camera.offset_position(offset_cords);
+
+        SDL_RenderLine(renderer, start_cords.x, offset_cords.y, far_points.x, offset_cords.y);
+        SDL_RenderLine(renderer, offset_cords.x, start_cords.y, offset_cords.x, far_points.y);
+    }
+    
 }
 
 bool Game::end_game()
@@ -117,7 +188,38 @@ void Game::waiting_event(SDL_Event event)
         _game_state = Game_state::TURN;
         refresh_ships();
         mark_visible_ships();
+        _camera.reset_position();
     }
+}
+
+void Game::turn_event(SDL_Event event)
+{
+    Position position = _camera.position();
+    if (event.type == SDL_EVENT_KEY_DOWN)
+    {
+        if (event.key.key == SDLK_D)
+        {
+            position.x -= 32;
+            _camera.position(position);
+        }
+        if (event.key.key == SDLK_A)
+        {
+            position.x += 32;
+            _camera.position(position);
+        }
+        if (event.key.key == SDLK_W)
+        {
+            position.y += 32;
+            _camera.position(position);
+        }
+        if (event.key.key == SDLK_S)
+        {
+            position.y -= 32;
+            _camera.position(position);
+        }
+        
+    }
+    
 }
 
 void Game::mouse_input(SDL_Event event)

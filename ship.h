@@ -67,6 +67,7 @@ public:
     int movement_range() { return _movement_range; };
     int remaining_movement() { return _remaining_movement; };
     Position position() { return _position; };
+    SDL_Texture* texture() { return _texture; };
 
     // setters
     void visible(bool visible) { _visible = visible; };

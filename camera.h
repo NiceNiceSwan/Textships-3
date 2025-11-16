@@ -32,7 +32,7 @@ public:
 
     // functions
     void reset_position();
-    SDL_FRect offset_position(SDL_FRect texture);
+    SDL_FRect offset_position(SDL_FRect rectangle);
     Position offset_position(Position position);
 };
 
