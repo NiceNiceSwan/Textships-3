@@ -15,6 +15,9 @@
                 "-I${workspaceFolder}\\SDL3_image\\include",
                 "-L${workspaceFolder}\\SDL3_image\\lib",
                 "-lSDL3_image",
+                "-I${workspaceFolder}\\SDL3_ttf\\include",
+                "-L${workspaceFolder}\\SDL3_ttf\\lib",
+                "-lSDL3_ttf",
                 "-o",
                 "${workspaceFolder}\\rooster.exe"
             ],

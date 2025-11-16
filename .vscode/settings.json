@@ -44,6 +44,20 @@
         "xstring": "cpp",
         "xtr1common": "cpp",
         "xutility": "cpp",
-        "list": "cpp"
+        "list": "cpp",
+        "iostream": "cpp",
+        "array": "cpp",
+        "bit": "cpp",
+        "cstdarg": "cpp",
+        "cwctype": "cpp",
+        "deque": "cpp",
+        "unordered_map": "cpp",
+        "functional": "cpp",
+        "memory_resource": "cpp",
+        "numeric": "cpp",
+        "string_view": "cpp",
+        "numbers": "cpp",
+        "ostream": "cpp",
+        "cinttypes": "cpp"
     }
 }

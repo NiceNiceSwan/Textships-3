@@ -7,17 +7,18 @@
 
 Game::Game()
 {
+    _game_state = Game_state::WAITING;
     _quit_game = false;
     _player = 0;
     _ships.resize(2);
-    _map.resize(MAP_SIZE_X, std::vector<Map_tile>(MAP_SIZE_Y));
+    // // _map.resize(MAP_SIZE_X, std::vector<Map_tile>(MAP_SIZE_Y));
 
     std::uniform_int_distribution<int> player_1_spawn_positions(0, 9);
 
-    // debug positions to test detection and firing
+    // // debug positions to test detection and firing
     std::uniform_int_distribution<int> player_2_spawn_positions(5, 14);
 
-    // std::uniform_int_distribution<int> player_2_spawn_positions(40, 49);
+    // // std::uniform_int_distribution<int> player_2_spawn_positions(40, 49);
 
     for (size_t i = 0; i < _ships.size(); i++)
     {
@@ -30,6 +31,47 @@ Game::Game()
     generate_spawning_positions(player_1_spawn_positions, SHIPS_IN_TEAM, TEAM_1);
     generate_spawning_positions(player_1_spawn_positions, SHIPS_IN_TEAM, TEAM_2);
     
+}
+
+void Game::draw(SDL_Renderer* renderer)
+{
+    switch (_game_state)
+    {
+    case Game_state::WAITING:
+        wait_screen(renderer);
+        break;
+    case Game_state::TURN:
+        draw_map(renderer);
+        break;
+    default:
+        break;
+    }
+}
+
+/// @brief draws the wait screen
+/// @param renderer the renderer which will draw the scene
+void Game::wait_screen(SDL_Renderer* renderer)
+{
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_SetRenderScale(renderer, 2, 2);
+    std::string text = "Player's " + std::to_string(_player + 1) + " turn.";
+    SDL_RenderDebugText(renderer, WINDOW_WIDTH / 8, WINDOW_HEIGHT / 6, text.c_str());
+    text = "Press enter to continue";
+    SDL_RenderDebugText(renderer, WINDOW_WIDTH / 8, WINDOW_HEIGHT / 4, text.c_str());
+    SDL_SetRenderScale(renderer, 1, 1);
+    SDL_RenderPresent(renderer);
+}
+
+void Game::draw_map(SDL_Renderer* renderer)
+{
+    SDL_SetRenderDrawColor(renderer, 0, 64, 128, SDL_ALPHA_OPAQUE);
+    SDL_RenderClear(renderer);
+
+    
+
+    SDL_RenderPresent(renderer);
 }
 
 bool Game::end_game()
@@ -57,7 +99,7 @@ Game_state Game::event_handler(SDL_Event event)
     {
         if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_RETURN)
         {
-            _game_state == Game_state::TURN;
+            _game_state = Game_state::TURN;
             refresh_ships();
             mark_visible_ships();
             turn();
@@ -65,13 +107,28 @@ Game_state Game::event_handler(SDL_Event event)
         return Game_state::WAITING;
     }
     
-    // return SDL_APP_CONTINUE;
+    return Game_state::WAITING;
+}
+
+void Game::waiting_event(SDL_Event event)
+{
+    if (event.type == SDL_EVENT_KEY_DOWN && event.key.key == SDLK_RETURN)
+    {
+        _game_state = Game_state::TURN;
+        refresh_ships();
+        mark_visible_ships();
+    }
+}
+
+void Game::mouse_input(SDL_Event event)
+{
+
 }
 
 /// @brief houses the main game loop
 void Game::play()
 {
-    wait_screen();
+    // wait_screen();
     refresh_ships();
     mark_visible_ships();
     turn();
@@ -84,29 +141,6 @@ void Game::play()
     {
         _player = TEAM_1;
     }
-}
-
-/// @brief prints a wait screen to allow the players to switch
-void Game::wait_screen()
-{
-    // _terminal_manager.begin_turn(_player);
-    // while (true)
-    // {
-    //     if (terminal_has_input())
-    //     {
-    //         int player_input = terminal_read();
-    //         if (player_input == TK_ENTER || player_input == TK_MOUSE_LEFT)
-    //         {
-    //             break;
-    //         }
-    //         if (player_input == TK_CLOSE)
-    //         {
-    //             _quit_game = true;
-    //             break;
-    //         }
-            
-    //     }
-    // }
 }
 
 void Game::turn()
@@ -310,6 +344,7 @@ bool Game::hit_a_ship(Ship* target_ship)
     //     return true;
     // }
     // return false;
+    return false;
 }
 
 /**
