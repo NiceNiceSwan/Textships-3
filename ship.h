@@ -1,17 +1,21 @@
 #ifndef SHIP_H
 #define SHIP_H
 
+#include <vector>
 #include <string>
+#include <stdexcept>
+
+#include <SDL3/SDL.h>
 
 #include "position.h"
 
 enum Ship_class
 {
-    destroyer = 0x0044,
-    cruiser = 0x0043,
-    battleship = 0x0042,
-    carrier = 0x0041,
-    submarine = 0x0053
+    destroyer = 0,
+    cruiser = 1,
+    battleship = 2,
+    carrier = 3,
+    submarine = 4
 };
 
 class Ship
@@ -31,7 +35,13 @@ private:
     int _movement_range;
     int _remaining_movement;
 
+    SDL_Texture* _texture;
+
+    static std::vector<SDL_Texture*> _texture_cache;
+
     Position _position;
+
+    static SDL_Texture* initialize_texture(std::string path, SDL_Renderer* renderer);
 public:
     // Constructors
     Ship();
@@ -70,6 +80,7 @@ public:
 
     // functions
     void refresh_data();
+    static void initialize_texture_cache(SDL_Renderer* renderer);
 };
 
 

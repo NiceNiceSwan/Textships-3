@@ -1,5 +1,7 @@
 #include "ship.h"
 
+std::vector<SDL_Texture*> Ship::_texture_cache;
+
 /**
  * @brief sets the ship up as a destroyer
  * 
@@ -20,6 +22,7 @@ Ship Ship::Destroyer(int team)
     new_ship._movement_range = 7;
     new_ship._remaining_movement = new_ship._movement_range;
     new_ship._team = team;
+    new_ship._texture = _texture_cache[Ship_class::destroyer];
     return new_ship;
 }
 
@@ -43,6 +46,7 @@ Ship Ship::Cruiser(int team)
     new_ship._movement_range = 5;
     new_ship._remaining_movement = new_ship._movement_range;
     new_ship._team = team;
+    new_ship._texture = _texture_cache[Ship_class::cruiser];
     return new_ship;
 }
 
@@ -66,6 +70,7 @@ Ship Ship::Battleship(int team)
     new_ship._movement_range = 3;
     new_ship._remaining_movement = new_ship._movement_range;
     new_ship._team = team;
+    new_ship._texture = _texture_cache[Ship_class::battleship];
     return new_ship;
 }
 
@@ -106,4 +111,52 @@ void Ship::refresh_data()
     _can_fire = true;
     _remaining_movement = _movement_range;
     _visible = false;
+}
+
+void Ship::initialize_texture_cache(SDL_Renderer* renderer)
+{
+    SDL_Texture* texture = NULL;
+    std::vector<std::string> texture_paths;
+    texture_paths.push_back("images/destroyer.bmp");
+    texture_paths.push_back("images/cruiser.bmp");
+    texture_paths.push_back("images/battleship.bmp");
+    for (size_t texture_index = 0; texture_index < texture_paths.size(); texture_index++)
+    {
+        texture = initialize_texture(texture_paths[texture_index], renderer);
+        if (!texture)
+        {
+            throw std::runtime_error("Error loading textures!");
+        }
+        Ship::_texture_cache.push_back(texture);
+    }
+}
+
+SDL_Texture* Ship::initialize_texture(std::string path, SDL_Renderer* renderer)
+{
+    SDL_Surface *surface = NULL;
+    char* BMP_path = nullptr;
+
+    path = "%s" + path;
+
+    SDL_asprintf(&BMP_path, path.c_str(), SDL_GetBasePath());
+    surface = SDL_LoadBMP(BMP_path);
+    if (!surface) {
+        SDL_Log("Couldn't load bitmap: %s", SDL_GetError());
+        return NULL;
+    }
+
+    SDL_free(BMP_path);
+
+    SDL_Texture* texture = NULL;
+
+    texture = SDL_CreateTextureFromSurface(renderer, surface);
+    SDL_SetTextureScaleMode(texture, SDL_ScaleMode::SDL_SCALEMODE_NEAREST);
+    if (!texture) {
+        SDL_Log("Couldn't create static texture: %s", SDL_GetError());
+        return NULL;
+    }
+
+    SDL_DestroySurface(surface);
+
+    return texture;
 }
