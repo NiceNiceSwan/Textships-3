@@ -82,7 +82,7 @@ void Game::draw_map(SDL_Renderer* renderer)
 
 void Game::draw_ships(SDL_Renderer* renderer)
 {
-    SDL_FRect texture_position = { 0, 0, (float)PIXEL_SIZE, (float)PIXEL_SIZE};
+    SDL_FRect texture_position;
 
     for (size_t team_id = 0; team_id < 2; team_id++)
     {
@@ -93,6 +93,8 @@ void Game::draw_ships(SDL_Renderer* renderer)
             {
                 texture_position.x = ship->position().x * PIXEL_SIZE;
                 texture_position.y = ship->position().y * PIXEL_SIZE;
+                texture_position.h = (float)PIXEL_SIZE;
+                texture_position.w = (float)PIXEL_SIZE;
 
                 texture_position = _camera.offset_position(texture_position);
                 
@@ -217,9 +219,11 @@ void Game::turn_event(SDL_Event event)
             position.y -= 32;
             _camera.position(position);
         }
-        
     }
-    
+    if (event.type == SDL_EVENT_MOUSE_WHEEL)
+    {
+        _camera.scroll_scale(event.wheel.y);
+    }
 }
 
 void Game::mouse_input(SDL_Event event)

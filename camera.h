@@ -13,6 +13,7 @@ private:
     Position _position;
     int _view_width;
     int _view_height;
+    double _scale;
 
 public:
     // constructors
@@ -24,16 +25,22 @@ public:
     Position position() { return _position; }
     int view_width() { return _view_width; }
     int view_height() { return _view_height; }
+    double scale() { return _scale; }
 
     // setters
     void position(Position position) { _position = position; }
     void view_width(int width) { _view_width = width; }
     void view_height(int height) { _view_height = height; }
+    void scale(double scale) { _scale = scale; }
+
+    // simple functions
 
     // functions
     void reset_position();
     SDL_FRect offset_position(SDL_FRect rectangle);
     Position offset_position(Position position);
+    void adjust_scale(double multiplier);
+    void scroll_scale(int scroll_amount);
 };
 
 #endif
