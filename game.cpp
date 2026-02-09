@@ -74,6 +74,7 @@ void Game::draw_map(SDL_Renderer* renderer)
 
     draw_border_lines(renderer);
     draw_coordinate_lines(renderer);
+    draw_selection_rect(renderer);
 
     draw_ships(renderer);
 
@@ -109,9 +110,6 @@ void Game::draw_ships(SDL_Renderer* renderer)
 void Game::draw_border_lines(SDL_Renderer* renderer)
 {
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
-    
-    float far_right_point = MAP_SIZE_X * PIXEL_SIZE;
-    float far_down_point = MAP_SIZE_Y * PIXEL_SIZE;
 
     SDL_FRect border_rectangle;
     border_rectangle.x = 0;
@@ -145,6 +143,17 @@ void Game::draw_coordinate_lines(SDL_Renderer* renderer)
         SDL_RenderLine(renderer, offset_cords.x, start_cords.y, offset_cords.x, far_points.y);
     }
     
+}
+
+void Game::draw_selection_rect(SDL_Renderer* renderer)
+{
+    SDL_SetRenderDrawColor(renderer, 0, 32, 64, 255);
+    Position selection_rect_position = _camera.offset_position(_selection_rect_position);
+    _selection_rect.x = selection_rect_position.x;
+    _selection_rect.y = selection_rect_position.y;
+    _selection_rect.h = PIXEL_SIZE * _camera.scale();
+    _selection_rect.w = PIXEL_SIZE * _camera.scale();
+    SDL_RenderFillRect(renderer, &_selection_rect);
 }
 
 bool Game::end_game()
@@ -224,6 +233,32 @@ void Game::turn_event(SDL_Event event)
     {
         _camera.scroll_scale(event.wheel.y);
     }
+    if (event.type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+    {
+        SDL_MouseButtonEvent mouse_event = event.button;
+        if (mouse_event.button == SDL_BUTTON_LEFT)
+        {
+            float x;
+            float y;
+            SDL_GetMouseState(&x, &y);
+
+            _selection_rect_position = Position(x, y);
+
+            _selection_rect_position.x -= (int)_selection_rect_position.x % (PIXEL_SIZE * (int)_camera.scale());
+            _selection_rect_position.y -= (int)_selection_rect_position.y % (PIXEL_SIZE * (int)_camera.scale());
+            
+            _selection_rect_position = _camera.offset_position_reverse(_selection_rect_position);
+
+            _selection_rect.h = PIXEL_SIZE;
+            _selection_rect.w = PIXEL_SIZE;
+        }
+        if (mouse_event.button == SDL_BUTTON_RIGHT)
+        {
+            _selection_rect.h = 0;
+            _selection_rect.w = 0;
+        }
+    }
+    
 }
 
 void Game::mouse_input(SDL_Event event)

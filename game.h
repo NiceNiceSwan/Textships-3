@@ -8,6 +8,7 @@
 #include "ship.h"
 #include "map_tile.h"
 #include "camera.h"
+#include "position.h"
 
 extern std::mt19937_64 random_number_generator;
 
@@ -37,6 +38,8 @@ private:
 
     Game_state _game_state;
     Camera _camera;
+    SDL_FRect _selection_rect;
+    Position _selection_rect_position;
 
 
     bool _selected_a_ship;
@@ -50,6 +53,7 @@ private:
     void draw_ships(SDL_Renderer* renderer);
     void draw_border_lines(SDL_Renderer* renderer);
     void draw_coordinate_lines(SDL_Renderer* renderer);
+    void draw_selection_rect(SDL_Renderer* renderer);
 
 public:
     Game();

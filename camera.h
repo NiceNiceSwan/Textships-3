@@ -39,6 +39,9 @@ public:
     void reset_position();
     SDL_FRect offset_position(SDL_FRect rectangle);
     Position offset_position(Position position);
+    /// @brief  doesn't exist for now
+    SDL_FRect offset_position_reverse(SDL_FRect rectangle);
+    Position offset_position_reverse(Position position);
     void adjust_scale(double multiplier);
     void scroll_scale(int scroll_amount);
 };
