@@ -38,8 +38,10 @@ private:
 
     Game_state _game_state;
     Camera _camera;
+
     SDL_FRect _selection_rect;
     Position _selection_rect_position;
+    bool _has_selection_rect;
 
 
     bool _selected_a_ship;

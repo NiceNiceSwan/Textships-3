@@ -12,6 +12,7 @@ Game::Game()
     _player = 0;
     _ships.resize(2);
     _map.resize(MAP_SIZE_X, std::vector<Map_tile>(MAP_SIZE_Y));
+    _has_selection_rect = false;
 }
 
 void Game::initialize()
@@ -74,7 +75,11 @@ void Game::draw_map(SDL_Renderer* renderer)
 
     draw_border_lines(renderer);
     draw_coordinate_lines(renderer);
-    draw_selection_rect(renderer);
+
+    if (_has_selection_rect)
+    {
+        draw_selection_rect(renderer);
+    }
 
     draw_ships(renderer);
 
@@ -249,13 +254,11 @@ void Game::turn_event(SDL_Event event)
             
             _selection_rect_position = _camera.offset_position_reverse(_selection_rect_position);
 
-            _selection_rect.h = PIXEL_SIZE;
-            _selection_rect.w = PIXEL_SIZE;
+            _has_selection_rect = true;
         }
         if (mouse_event.button == SDL_BUTTON_RIGHT)
         {
-            _selection_rect.h = 0;
-            _selection_rect.w = 0;
+            _has_selection_rect = false;
         }
     }
     
